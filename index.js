@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const zero = '+[]';
 const one = '+!![]';
 
@@ -42,4 +44,21 @@ map.C = `((()=>{})[${fromString('constructor')}](${fromString('return escape')})
 
 const compile = code => `(()=>{})[${fromString('constructor')}](${fromString(code)})()`;
 
-console.log(compile('console.log("Hello world!");'));
+const transformJS = file => {
+  fs.readFile("./inputs/" + file, 'utf8', function(err, data) {
+    if (err) throw err;
+    console.log('OK: ' + file);
+    fs.writeFile("./outputs/" + file, compile(`${data}`), function(err) {
+      if(err) {
+          return console.log(err);
+      }
+      console.log("The file was saved!");
+    });
+  });
+}
+
+fs.readdir("./inputs", function (err, files) {
+  for (const file of files) {
+    transformJS(file);
+  }
+});
