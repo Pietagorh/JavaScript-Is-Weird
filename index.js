@@ -8,8 +8,6 @@ const number = n => {
   return Array.from({length: n}, () => one).join(' + ');
 }
 
-// C
-
 const map = {};
 
 const fromString = s =>s.split('').map(x => {
@@ -42,23 +40,59 @@ map.h = `(${number(17)})[${fromString('toString')}](${number(18)})`;
 map.m = `(${number(22)})[${fromString('toString')}](${number(23)})`;
 map.C = `((()=>{})[${fromString('constructor')}](${fromString('return escape')})()(${map['\\']}))[${number(2)}]`;
 
-const compile = code => `(()=>{})[${fromString('constructor')}](${fromString(code)})()`;
+const compile = (err, data, filePath) => {
+  if (err) {
+    throw new error(err);
+  }
 
-const transformJS = file => {
-  fs.readFile("./inputs/" + file, 'utf8', function(err, data) {
-    if (err) throw err;
-    console.log('OK: ' + file);
-    fs.writeFile("./outputs/" + file, compile(`${data}`), function(err) {
+  const directory = filePath.split("/");
+  directory.pop();
+  if (directory.length !== 0 && !fs.existsSync("./outputs/" + directory.join("/"))) {
+    fs.mkdirSync("./outputs/" + directory.join("/"));
+  }
+
+  const compiledVersion = `(()=>{})[${fromString('constructor')}](${fromString(data)})()`;
+  fs.writeFile("./outputs/" + filePath, compiledVersion,
+    function(err) {
       if(err) {
-          return console.log(err);
+        throw new error(err);
       }
       console.log("The file was saved!");
-    });
-  });
-}
+    }
+  );
+};
 
-fs.readdir("./inputs", function (err, files) {
+const followPath = filePath => fs.readFile("./inputs/" + filePath, 'utf8', function (err, data) {
+  compile(err, data, filePath);
+});
+
+const getAllFiles = (directory = "") => fs.readdir("./inputs/" + directory, function (err, files) {
+  if (err) {
+    throw new error(err);
+  }
   for (const file of files) {
-    transformJS(file);
+    if (fs.statSync("./inputs/" + directory + file).isDirectory()) getAllFiles(directory + file + "/");
+    else {
+      console.log('OK: ' + directory + file);
+      followPath(directory + file);
+    }
   }
 });
+
+const deleteFolderRecursive = function(path) {
+  if (fs.existsSync(path)) {
+    fs.readdirSync(path).forEach(function(file) {
+      const curPath = path + "/" + file;
+      if(fs.lstatSync(curPath).isDirectory()) {
+        deleteFolderRecursive(curPath);
+      } else {
+        fs.unlinkSync(curPath);
+      }
+    });
+    fs.rmdirSync(path);
+  }
+};
+
+deleteFolderRecursive("./outputs/");
+fs.mkdirSync("./outputs/");
+getAllFiles();
