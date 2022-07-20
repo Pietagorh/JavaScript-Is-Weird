@@ -40,7 +40,7 @@ map.h = `(${number(17)})[${fromString('toString')}](${number(18)})`;
 map.m = `(${number(22)})[${fromString('toString')}](${number(23)})`;
 map.C = `((()=>{})[${fromString('constructor')}](${fromString('return escape')})()(${map['\\']}))[${number(2)}]`;
 
-const compile = (err, data, filePath) => {
+const compile = (err, data, filePath, fileType) => {
   if (err) {
     throw new error(err);
   }
@@ -50,8 +50,7 @@ const compile = (err, data, filePath) => {
   if (directory.length !== 0 && !fs.existsSync("./outputs/" + directory.join("/"))) {
     fs.mkdirSync("./outputs/" + directory.join("/"));
   }
-
-  const compiledVersion = `(()=>{})[${fromString('constructor')}](${fromString(data)})()`;
+  const compiledVersion = `${fileType === ".ts" ? "eval('": ""}(()=>{})[${fromString('constructor')}](${fromString(data)})()${fileType === ".ts" ? "')": ""}`;
   fs.writeFile("./outputs/" + filePath, compiledVersion,
     function(err) {
       if(err) {
@@ -62,8 +61,8 @@ const compile = (err, data, filePath) => {
   );
 };
 
-const followPath = filePath => fs.readFile("./inputs/" + filePath, 'utf8', function (err, data) {
-  compile(err, data, filePath);
+const followPath = (filePath, fileType) => fs.readFile("./inputs/" + filePath, 'utf8', function (err, data) {
+  compile(err, data, filePath, fileType);
 });
 
 const getAllFiles = (directory = "") => fs.readdir("./inputs/" + directory, function (err, files) {
@@ -74,7 +73,12 @@ const getAllFiles = (directory = "") => fs.readdir("./inputs/" + directory, func
     if (fs.statSync("./inputs/" + directory + file).isDirectory()) getAllFiles(directory + file + "/");
     else {
       console.log(directory + file + " detected!");
-      followPath(directory + file);
+      if (file.endsWith(".js")) {
+          followPath(directory + file, ".js");
+      }
+      if (file.endsWith(".ts")) {
+        followPath(directory + file, ".ts");
+      }
     }
   }
 });
