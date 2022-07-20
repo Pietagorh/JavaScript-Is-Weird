@@ -57,7 +57,7 @@ const compile = (err, data, filePath) => {
       if(err) {
         throw new error(err);
       }
-      console.log("The file was saved!");
+      console.log(filePath + " generated!");
     }
   );
 };
@@ -73,7 +73,7 @@ const getAllFiles = (directory = "") => fs.readdir("./inputs/" + directory, func
   for (const file of files) {
     if (fs.statSync("./inputs/" + directory + file).isDirectory()) getAllFiles(directory + file + "/");
     else {
-      console.log('OK: ' + directory + file);
+      console.log(directory + file + " detected!");
       followPath(directory + file);
     }
   }
